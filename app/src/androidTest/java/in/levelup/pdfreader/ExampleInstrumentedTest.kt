@@ -1,4 +1,4 @@
-package `in`.levelup.Pdfreader
+package `in`.levelup.pdfreader
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

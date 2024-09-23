@@ -1,6 +1,5 @@
-package `in`.levelup.Pdfreader.ui.theme
+package `in`.levelup.pdfreader.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

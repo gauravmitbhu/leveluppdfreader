@@ -1,4 +1,4 @@
-package `in`.levelup.Pdfreader
+package `in`.levelup.pdfreader
 
 import org.junit.Test
 
