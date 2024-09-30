@@ -1,6 +1,5 @@
-package `in`.levelup.pdfreader
+package `in`.levelup.pdfreader.screen
 
-import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -12,7 +11,9 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,24 +29,35 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import `in`.levelup.pdfreader.util.PdfBitmapConverter
 
-@SuppressLint("AutoboxingStateCreation")
+
 @Composable
 fun PdfViewerScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    states: PdfScreenStates,
+    events: (PdfScreenEvents) -> Unit
 ) {
     val context = LocalContext.current
+
     val pdfBitmapConverter = remember {
         PdfBitmapConverter(context)
     }
+
     var pdfUri by remember {
         mutableStateOf<Uri?>(null)
     }
+
     var renderedPages by remember {
         mutableStateOf<List<Bitmap>>(emptyList())
     }
+
     var renderedPageIndex by remember {
         mutableIntStateOf(0)
+    }
+
+    val extractedText by remember {
+        mutableStateOf("")
     }
 
     LaunchedEffect(pdfUri) {
@@ -63,11 +75,16 @@ fun PdfViewerScreen(
     Surface(modifier = modifier.fillMaxSize()
     ) {
 
-        Column() {
-            if (pdfUri != null) {
-                PdfPage(
-                    page = renderedPages[0]
+        Column {
+
+            if (!states.loading) {
+                Text(
+                    modifier = Modifier.height(300.dp),
+                    text = states.result[0]
+
                 )
+            }else {
+                CircularProgressIndicator()
             }
 
             Spacer(modifier = Modifier
@@ -76,61 +93,35 @@ fun PdfViewerScreen(
             )
 
             Row {
+
                 Button(onClick = {
                     choosePdfLauncher.launch("application/pdf")
                 }) {
                     Text("choose pdf")
                 }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
                 Button(onClick = {
                     renderedPageIndex++
                 }) {
                     Text("next page")
                 }
-            }
-        }
-    }
 
-}
+                Spacer(modifier = Modifier.width(10.dp))
 
-    /*if(pdfUri == null) {
-        Box(
-            modifier = modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Button(onClick = {
-                choosePdfLauncher.launch("application/pdf")
-            }) {
-                Text(text = "Choose PDF")
-            }
-        }
-    } else {
-        Column(
-            modifier = modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) {
-                itemsIndexed(renderedPages) { index, page ->
-                    PdfPage(
-                        page = page
-                    )
+                Button(onClick = {
+                    if (renderedPages.isNotEmpty()){
+                        events(PdfScreenEvents.ExtractTextFromPdfBitmaps(renderedPages))
+                    }
+                }) {
+                    Text("convert to text")
                 }
             }
-            Button(onClick = {
-                choosePdfLauncher.launch("application/pdf")
-            }) {
-                Text(text = "Choose another PDF")
-            }
-
         }
     }
+
 }
-}*/
 
 @Composable
 fun PdfPage(
@@ -152,5 +143,8 @@ fun PdfPage(
 @Composable
 @Preview
 fun PdfViewerScreenPreview() {
-    PdfViewerScreen()
+    PdfViewerScreen(
+        states = PdfScreenStates(loading = false, result = listOf()),
+        events = {}
+    )
 }

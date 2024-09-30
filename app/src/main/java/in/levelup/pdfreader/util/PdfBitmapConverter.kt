@@ -1,4 +1,4 @@
-package `in`.levelup.pdfreader
+package `in`.levelup.pdfreader.util
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 class PdfBitmapConverter(
     private val context: Context
 ) {
-    var renderer: PdfRenderer? = null
+    private var renderer: PdfRenderer? = null
 
     suspend fun pdfToBitmaps(contentUri: Uri): List<Bitmap> {
         return withContext(Dispatchers.IO) {
