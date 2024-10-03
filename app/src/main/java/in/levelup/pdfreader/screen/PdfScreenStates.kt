@@ -1,8 +1,10 @@
 package `in`.levelup.pdfreader.screen
 
-import android.graphics.Bitmap
-
-data class PdfScreenStates (
+data class PdfScreenStates(
     val loading: Boolean = false,
-    val result: List<String> = listOf("")
+    val result: List<String> = listOf(""),
+    val isPaused: Boolean = false,
+    val isSpeaking: Boolean = false,
+    val currentText: String = "",
+    val remainingText: String = ""
 )

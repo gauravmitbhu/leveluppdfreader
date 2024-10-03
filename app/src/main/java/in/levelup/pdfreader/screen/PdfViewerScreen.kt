@@ -2,18 +2,30 @@ package `in`.levelup.pdfreader.screen
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,14 +35,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import `in`.levelup.pdfreader.util.PdfBitmapConverter
-
 
 @Composable
 fun PdfViewerScreen(
@@ -38,6 +49,7 @@ fun PdfViewerScreen(
     states: PdfScreenStates,
     events: (PdfScreenEvents) -> Unit
 ) {
+
     val context = LocalContext.current
 
     val pdfBitmapConverter = remember {
@@ -52,12 +64,8 @@ fun PdfViewerScreen(
         mutableStateOf<List<Bitmap>>(emptyList())
     }
 
-    var renderedPageIndex by remember {
+    var pdfPageIndex by remember {
         mutableIntStateOf(0)
-    }
-
-    val extractedText by remember {
-        mutableStateOf("")
     }
 
     LaunchedEffect(pdfUri) {
@@ -72,28 +80,69 @@ fun PdfViewerScreen(
         pdfUri = it
     }
 
-    Surface(modifier = modifier.fillMaxSize()
-    ) {
+    val playIcon = Icons.Default.PlayArrow
+    val pauseIcon = Icons.Default.Clear
 
-        Column {
+    Log.d("TAG", "PdfViewerScreen: ${states.isSpeaking}")
+    Log.d("TAG", "PdfViewerScreen: ${states.isPaused}")
+
+    Surface(modifier = modifier.fillMaxSize()) {
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center) {
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+
+                if (!states.isSpeaking) {
+                    IconButton(onClick = {
+                        if (states.isPaused) {
+                            events(
+                                PdfScreenEvents.ResumeSpeaking
+                            )
+                        }else {
+                            events(
+                                PdfScreenEvents.SpeakText(
+                                    states.result[pdfPageIndex]
+                                )
+                            )
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null
+                        )
+                    }
+                }
+                if(states.isSpeaking && !states.isPaused) {
+                    IconButton(onClick = {
+                        events(PdfScreenEvents.PauseSpeaking)
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
 
             if (!states.loading) {
                 Text(
-                    modifier = Modifier.height(300.dp),
-                    text = states.result[0]
-
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    text = states.result[pdfPageIndex]
                 )
             }else {
                 CircularProgressIndicator()
             }
 
-            Spacer(modifier = Modifier
-                .height(10.dp)
-                .weight(1f)
-            )
+            Row(modifier = Modifier
+                .height(60.dp)
 
-            Row {
-
+                .padding(horizontal = 2.dp)
+                .background(color = Color.Transparent)
+                .fillMaxWidth()) {
                 Button(onClick = {
                     choosePdfLauncher.launch("application/pdf")
                 }) {
@@ -103,7 +152,7 @@ fun PdfViewerScreen(
                 Spacer(modifier = Modifier.width(10.dp))
 
                 Button(onClick = {
-                    renderedPageIndex++
+                    pdfPageIndex++
                 }) {
                     Text("next page")
                 }
@@ -112,7 +161,13 @@ fun PdfViewerScreen(
 
                 Button(onClick = {
                     if (renderedPages.isNotEmpty()){
-                        events(PdfScreenEvents.ExtractTextFromPdfBitmaps(renderedPages))
+                        /*events(PdfScreenEvents.ExtractTextFromPdfBitmaps(
+                            context = context,
+                            uri = pdfUri ?: Uri.EMPTY
+                        ))*/
+                        events(PdfScreenEvents.GetTextFromScannedPdf(
+                            pdfBitmaps = renderedPages
+                        ))
                     }
                 }) {
                     Text("convert to text")
@@ -120,31 +175,14 @@ fun PdfViewerScreen(
             }
         }
     }
-
-}
-
-@Composable
-fun PdfPage(
-    page: Bitmap,
-    modifier: Modifier = Modifier
-) {
-    AsyncImage(
-        model = page,
-        contentDescription = null,
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(page.width.toFloat() / page.height.toFloat())
-            .drawWithContent {
-                drawContent()
-            }
-    )
 }
 
 @Composable
 @Preview
 fun PdfViewerScreenPreview() {
     PdfViewerScreen(
-        states = PdfScreenStates(loading = false, result = listOf()),
+        states = PdfScreenStates(loading = true,
+            result = listOf()),
         events = {}
     )
 }

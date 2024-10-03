@@ -80,7 +80,8 @@ dependencies {
     implementation("com.google.mlkit:text-recognition-korean:16.0.1")
 
     //pdf
-    implementation("com.itextpdf:itextg:5.5.10")
+    implementation(libs.itext7.core.v7115)
+    implementation(libs.kernel)
 
     //dagger hilt
     implementation(libs.hilt.android)
