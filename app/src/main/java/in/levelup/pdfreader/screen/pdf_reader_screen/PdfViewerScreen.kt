@@ -1,4 +1,4 @@
-package `in`.levelup.pdfreader.screen
+package `in`.levelup.pdfreader.screen.pdf_reader_screen
 
 import android.graphics.Bitmap
 import android.net.Uri
@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -47,8 +45,11 @@ import `in`.levelup.pdfreader.util.PdfBitmapConverter
 fun PdfViewerScreen(
     modifier: Modifier = Modifier,
     states: PdfScreenStates,
-    events: (PdfScreenEvents) -> Unit
+    events: (PdfScreenEvents) -> Unit,
+    id: Int
 ) {
+
+    Log.d("TAG", "PdfViewerScreen: $id")
 
     val context = LocalContext.current
 
@@ -68,23 +69,15 @@ fun PdfViewerScreen(
         mutableIntStateOf(0)
     }
 
+    LaunchedEffect(Unit) {
+        events(PdfScreenEvents.GetPdfById(id))
+    }
+
     LaunchedEffect(pdfUri) {
         pdfUri?.let { uri ->
             renderedPages = pdfBitmapConverter.pdfToBitmaps(uri)
         }
     }
-
-    val choosePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) {
-        pdfUri = it
-    }
-
-    val playIcon = Icons.Default.PlayArrow
-    val pauseIcon = Icons.Default.Clear
-
-    Log.d("TAG", "PdfViewerScreen: ${states.isSpeaking}")
-    Log.d("TAG", "PdfViewerScreen: ${states.isPaused}")
 
     Surface(modifier = modifier.fillMaxSize()) {
 
@@ -102,7 +95,7 @@ fun PdfViewerScreen(
                         }else {
                             events(
                                 PdfScreenEvents.SpeakText(
-                                    states.result[pdfPageIndex]
+                                    states.result[pdfPageIndex].text
                                 )
                             )
                         }
@@ -131,7 +124,7 @@ fun PdfViewerScreen(
                         .fillMaxWidth()
                         .weight(1f)
                         .verticalScroll(rememberScrollState()),
-                    text = states.result[pdfPageIndex]
+                    text = states.result[pdfPageIndex].text
                 )
             }else {
                 CircularProgressIndicator()
@@ -143,11 +136,6 @@ fun PdfViewerScreen(
                 .padding(horizontal = 2.dp)
                 .background(color = Color.Transparent)
                 .fillMaxWidth()) {
-                Button(onClick = {
-                    choosePdfLauncher.launch("application/pdf")
-                }) {
-                    Text("choose pdf")
-                }
 
                 Spacer(modifier = Modifier.width(10.dp))
 
@@ -159,19 +147,6 @@ fun PdfViewerScreen(
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-                Button(onClick = {
-                    if (renderedPages.isNotEmpty()){
-                        /*events(PdfScreenEvents.ExtractTextFromPdfBitmaps(
-                            context = context,
-                            uri = pdfUri ?: Uri.EMPTY
-                        ))*/
-                        events(PdfScreenEvents.GetTextFromScannedPdf(
-                            pdfBitmaps = renderedPages
-                        ))
-                    }
-                }) {
-                    Text("convert to text")
-                }
             }
         }
     }
@@ -183,6 +158,7 @@ fun PdfViewerScreenPreview() {
     PdfViewerScreen(
         states = PdfScreenStates(loading = true,
             result = listOf()),
-        events = {}
+        events = {},
+        id = 0
     )
 }

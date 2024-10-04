@@ -90,4 +90,12 @@ dependencies {
 
     //coroutines
     implementation(libs.kotlinx.coroutines.play.services)
+
+    //navigation
+    implementation (libs.androidx.navigation.compose)
+
+    //room
+    implementation(libs.androidx.room.ktx)
+    //noinspection KaptUsageInsteadOfKsp
+    kapt(libs.androidx.room.compiler)
 }

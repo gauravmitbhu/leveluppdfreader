@@ -10,14 +10,20 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfReader
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor
+import `in`.levelup.pdfreader.data.roomdatabase.PdfTextDao
+import `in`.levelup.pdfreader.model.PdfText
 import `in`.levelup.pdfreader.util.Resource
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
 import java.io.InputStream
+import javax.inject.Inject
 
 
-class Repository {
+class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
 
     fun extractTextFromPdfUriAsFlow(context: Context, pdfUri: Uri): Flow<Resource<List<String>>> = flow {
         emit(Resource.Loading())
@@ -39,30 +45,33 @@ class Repository {
     }
 
     fun recognizeTextFromImages(
-        pdfBitmaps: List<Bitmap>
-    ): Flow<Resource<List<String>>> = flow {
+        pdfBitmaps: List<Bitmap>,
+    ): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        val textResults = mutableListOf<String>()
-        for (pdfBitmap in pdfBitmaps) {
-            val bitmap = pdfBitmap.copy(Bitmap.Config.ARGB_8888, true)
-            val image = InputImage.fromBitmap(bitmap, 0)
-            try {
+        try {
+            for ((index, bitmap) in pdfBitmaps.withIndex()) {
+                val image = InputImage.fromBitmap(bitmap, 0)
                 val result = recognizer.process(image).await()
-                val recognizedText = result.text
-                if (recognizedText.isBlank()) {
-                    textResults.add("No text recognized")
-                } else {
-                    textResults.add(recognizedText)
-                }
-                Log.d("TAG", "Recognized text: $recognizedText")
-            } catch (e: Exception) {
-                Log.e("TAG", "Error recognizing text from image", e)
-                textResults.add("Error recognizing text from image")
-                emit(Resource.Error(message = "Error processing image: ${e.message}"))
+                val text = result.text
+                Log.d("TAG", "Extracted text from page $index: $text")
+                pdfTextDao.insert(PdfText(pageNumber = index + 1, text = text))
             }
+            emit(Resource.Success(Unit))
+        } catch (e: Exception) {
+            Log.e("TAG", "Error recognizing text from image", e)
+            emit(Resource.Error(message = "Error processing image: ${e.message}"))
         }
-        emit(Resource.Success(textResults))
     }
+
+
+    //room database
+    fun getAllDuration(): Flow<List<PdfText>> = pdfTextDao.getAllPdfText()
+        .flowOn(Dispatchers.IO)
+        .conflate()
+
+//    fun getPdfTextById(pdfId: Int): Flow<List<PdfText>> {
+//        return pdfTextDao.getPdfTextById(pdfId)
+//    }
 
 }

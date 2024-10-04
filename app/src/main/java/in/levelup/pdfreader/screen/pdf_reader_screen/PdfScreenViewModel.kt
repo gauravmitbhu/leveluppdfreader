@@ -1,4 +1,4 @@
-package `in`.levelup.pdfreader.screen
+package `in`.levelup.pdfreader.screen.pdf_reader_screen
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -41,7 +41,7 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
                 is Resource.Success -> {
                     _state.value = _state.value.copy(
                         loading = false,
-                        result = result.data!!
+                        //result = result.data!!
                     )
                 }
                 is Resource.Error -> {
@@ -50,6 +50,16 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
             }
         }
     }
+
+   /* fun fetchPdfTextById(pdfId: Int) {
+        viewModelScope.launch {
+            repository.getPdfTextById(pdfId).collect { pdfTexts ->
+                _state.value = _state.value.copy(
+                    result = pdfTexts
+                )
+            }
+        }
+    }*/
 
     private fun getTextFromScannedPdf(pdfBitmaps: List<Bitmap>) = viewModelScope.launch {
 
@@ -64,7 +74,6 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
                 is Resource.Success -> {
                     _state.value = _state.value.copy(
                         loading = false,
-                        result = result.data!!
                     )
                 }
                 is Resource.Error -> {
@@ -94,6 +103,10 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
             }
             is PdfScreenEvents.StopSpeaking -> {
                 stopTTs()
+            }
+
+            is PdfScreenEvents.GetPdfById -> {
+              //  fetchPdfTextById(event.pdfId)
             }
         }
     }
