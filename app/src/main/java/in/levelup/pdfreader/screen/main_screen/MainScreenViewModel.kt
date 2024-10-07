@@ -1,12 +1,13 @@
 package `in`.levelup.pdfreader.screen.main_screen
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import `in`.levelup.pdfreader.model.PdfText
+import `in`.levelup.pdfreader.model.Pdf
 import `in`.levelup.pdfreader.repository.Repository
 import `in`.levelup.pdfreader.util.Resource
 import kotlinx.coroutines.launch
@@ -19,20 +20,40 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
     val state: State<MainScreenStates> = _state
 
     init {
-        getAllPdfs()
-    }
-
-    private fun getAllPdfs() = viewModelScope.launch {
-        repository.getAllDuration().collect{ result ->
-            _state.value = _state.value.copy(
-               pdfText = result
-            )
+        viewModelScope.launch {
+            repository.getAllPdf().collect{ result ->
+                _state.value = _state.value.copy(
+                    pdf = result
+                )
+            }
         }
     }
 
-    private fun getTextFromScannedPdf(pdfBitmaps: List<Bitmap>) = viewModelScope.launch {
+    private fun storePdfTextWithId(bitmaps: List<Bitmap>) = viewModelScope.launch {
+        repository.getLatestPdfEntry().collect{ result ->
+            when(result){
+                is Resource.Loading -> {
+                    Log.d("TAG", "getLatestEntry: Loading")
+                }
+                is Resource.Success -> {
+                    Log.d("TAG", "getLatestEntry: ${result.data!!.pdfId}")
+                    getTextFromPdfBitMaps(id = result.data.pdfId,
+                        bitmaps = bitmaps
+                        )
+                }
+                is Resource.Error -> {
+                    Log.d("TAG", "getLatestEntry: ${result.message}")
+                }
+            }
+        }
+    }
 
-        repository.recognizeTextFromImages(pdfBitmaps = pdfBitmaps).collect{ result ->
+    private fun getTextFromPdfBitMaps(
+        id: Int,
+        bitmaps: List<Bitmap>) = viewModelScope.launch {
+        repository.recognizeTextFromImages(
+            id = id,
+            pdfBitmaps = bitmaps).collect{ result ->
 
             when(result){
                 is Resource.Loading -> {
@@ -47,24 +68,59 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
                     )
                 }
                 is Resource.Error -> {
-                    TODO()
+                    _state.value = _state.value.copy(
+                        loading = false,
+                        isSuccess = false
+                    )
+                }
+            }
+        }
+    }
+
+    //room database
+    private fun getAllPdf() = viewModelScope.launch {
+        repository.getAllPdf().collect { result ->
+            _state.value = _state.value.copy(
+                pdf = result
+            )
+        }
+    }
+
+    private fun insertPdf(pdf: Pdf,
+                          bitmaps: List<Bitmap>
+                          ) = viewModelScope.launch {
+        repository.insertPdf(pdf = pdf).collect{result ->
+            when(result){
+                is Resource.Loading -> {
+                    Log.d("TAG", "insertPdf: Loading")
+                }
+                is Resource.Success -> {
+                    storePdfTextWithId(bitmaps = bitmaps)
+                }
+                is Resource.Error -> {
+                    Log.d("TAG", "insertPdf: Success")
                 }
             }
         }
     }
 
     fun event(event: MainScreenEvents){
-        when(event){
-            is MainScreenEvents.ExtractTextFromPdfBitmaps -> {
-
-            }
-            is MainScreenEvents.GetTextFromScannedPdf -> {
-                getTextFromScannedPdf(event.pdfBitmaps)
-            }
-            is MainScreenEvents.AddPdf -> {
-    //            addPdf(event.pdfText)
-            }
-        }
+         when(event){
+             is MainScreenEvents.GetTextFromPdfBitMaps -> {
+                 //getTextFromPdfBitMaps(event.bitmaps)
+             }
+             is MainScreenEvents.AddPdf -> {
+                 insertPdf(bitmaps = event.bitmaps,
+                     pdf = event.pdf
+                     )
+             }
+             is MainScreenEvents.GetAllPds -> {
+                 getAllPdf()
+             }
+             is MainScreenEvents.StorePdfTextWithId -> {
+                 storePdfTextWithId(event.bitmaps)
+             }
+         }
     }
 
 }

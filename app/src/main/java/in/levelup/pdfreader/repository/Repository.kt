@@ -11,6 +11,7 @@ import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfReader
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor
 import `in`.levelup.pdfreader.data.roomdatabase.PdfTextDao
+import `in`.levelup.pdfreader.model.Pdf
 import `in`.levelup.pdfreader.model.PdfText
 import `in`.levelup.pdfreader.util.Resource
 import kotlinx.coroutines.Dispatchers
@@ -45,17 +46,22 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
     }
 
     fun recognizeTextFromImages(
+        id: Int,
         pdfBitmaps: List<Bitmap>,
     ): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         try {
-            for ((index, bitmap) in pdfBitmaps.withIndex()) {
+            pdfBitmaps.forEachIndexed { index, bitmap ->
                 val image = InputImage.fromBitmap(bitmap, 0)
                 val result = recognizer.process(image).await()
                 val text = result.text
-                Log.d("TAG", "Extracted text from page $index: $text")
-                pdfTextDao.insert(PdfText(pageNumber = index + 1, text = text))
+                pdfTextDao.insertPdfText(
+                    PdfText(
+                        pageNumber = index + 1,
+                        text = text,
+                        pdfId = id)
+                )
             }
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
@@ -64,14 +70,34 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
         }
     }
 
-
     //room database
-    fun getAllDuration(): Flow<List<PdfText>> = pdfTextDao.getAllPdfText()
+
+    suspend fun addPdf(pdf: Pdf){
+        pdfTextDao.insertPdf(pdf = pdf)
+    }
+
+    fun insertPdf(pdf: Pdf): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        try {
+            pdfTextDao.insertPdf(pdf = pdf)
+            emit(Resource.Success(Unit))
+        } catch (e: Exception){
+            emit(Resource.Error(e.message))
+        }
+    }
+
+    fun getAllPdf(): Flow<List<Pdf>> = pdfTextDao.getAllPdf()
         .flowOn(Dispatchers.IO)
         .conflate()
 
-//    fun getPdfTextById(pdfId: Int): Flow<List<PdfText>> {
-//        return pdfTextDao.getPdfTextById(pdfId)
-//    }
+    fun getLatestPdfEntry(): Flow<Resource<Pdf>> = flow {
+        emit(Resource.Loading())
+        try {
+            val result = pdfTextDao.getLatestPdf()
+            emit(Resource.Success(result))
+        } catch (e: Exception){
+            emit(Resource.Error(e.message))
+        }
+    }
 
 }

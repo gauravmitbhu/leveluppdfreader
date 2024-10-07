@@ -63,7 +63,9 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
 
     private fun getTextFromScannedPdf(pdfBitmaps: List<Bitmap>) = viewModelScope.launch {
 
-        repository.recognizeTextFromImages(pdfBitmaps = pdfBitmaps).collect{ result ->
+        repository.recognizeTextFromImages(
+            id = 1,
+            pdfBitmaps = pdfBitmaps).collect{ result ->
 
             when(result){
                 is Resource.Loading -> {

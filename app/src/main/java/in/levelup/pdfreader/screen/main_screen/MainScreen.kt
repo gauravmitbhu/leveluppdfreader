@@ -2,7 +2,6 @@ package `in`.levelup.pdfreader.screen.main_screen
 
 import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -17,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +26,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.BlendMode.Companion.Screen
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,8 +33,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import `in`.levelup.pdfreader.model.Pdf
 import `in`.levelup.pdfreader.model.PdfText
-import `in`.levelup.pdfreader.navigation.NavigationRoutes
 import `in`.levelup.pdfreader.util.PdfBitmapConverter
 
 @Composable
@@ -66,7 +65,11 @@ fun MainScreen(
         LaunchedEffect(pdfUri) {
             pdfUri?.let { uri ->
                 renderedPages = pdfBitmapConverter.pdfToBitmaps(uri)
-                events(MainScreenEvents.GetTextFromScannedPdf(renderedPages))
+                events(MainScreenEvents.AddPdf(
+                    pdf = Pdf(pdfName = uri.lastPathSegment.toString()),
+                    bitmaps = renderedPages
+                ))
+                events(MainScreenEvents.GetTextFromPdfBitMaps(renderedPages))
             }
         }
 
@@ -87,12 +90,17 @@ fun MainScreen(
                 }) {
                 Text("Select Pdf")
             }
-            LazyColumn {
-                items(states.pdfText) { result ->
-                    PdfLazyList(pdfs = result,
-                        navController = navController
-                    )
+            if (!states.loading) {
+                LazyColumn {
+                    items(states.pdf) { result ->
+                        PdfLazyList(
+                            pdfs = result,
+                            navController = navController
+                        )
+                    }
                 }
+            } else {
+                CircularProgressIndicator()
             }
         }
     }
@@ -101,17 +109,17 @@ fun MainScreen(
 @Composable
 @Preview
 fun MainScreenPreview(){
-    MainScreen(
+    /*MainScreen(
         states = MainScreenStates(),
         events = {},
         navController = rememberNavController()
-    )
+    )*/
 
-    //PdfLazyList(pdfs = emptyList())
+    //PdfLazyList(pdfs = Pdf(pdfName = "test"))
 }
 
 @Composable
-fun PdfLazyList(pdfs: PdfText,
+fun PdfLazyList(pdfs: Pdf,
                 navController: NavController
 ) {
     Column(modifier = Modifier
@@ -120,13 +128,14 @@ fun PdfLazyList(pdfs: PdfText,
         .background(color = Color.White),
         verticalArrangement = Arrangement.Center
     ) {
-        Log.d("TAG", "PdfLazyList: ${pdfs.id}")
-        Text(pdfs.text,
+
+        Text(pdfs.pdfName,
             maxLines = 1,
+            color = Color.Black,
             modifier = Modifier
                 .padding(horizontal = 10.dp)
                 .clickable {
-                    navController.navigate("pdf_reader_screen/${pdfs.id}")
+                    navController.navigate("pdf_reader_screen/${pdfs.pdfId}")
                 },
             overflow = TextOverflow.Ellipsis
         )
