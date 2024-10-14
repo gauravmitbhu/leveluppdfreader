@@ -1,9 +1,5 @@
 package `in`.levelup.pdfreader.screen.pdf_reader_screen
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -17,8 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PdfScreenViewModel @Inject constructor(private val repository: Repository,
-                                             private val ttsManager: TTSManager
-): ViewModel() {
+                                             private val ttsManager: TTSManager): ViewModel() {
 
     private val _state = mutableStateOf(PdfScreenStates())
     val state: State<PdfScreenStates> = _state
@@ -27,11 +22,8 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
         ttsManager.init()
     }
 
-    private fun extractTextFromPdfBitmaps(context: Context,
-                                          uri: Uri
-    ) = viewModelScope.launch {
-        repository.extractTextFromPdfUriAsFlow(context = context,
-            pdfUri = uri).collect{ result ->
+    private fun getPdfTextWithId(id: Int) = viewModelScope.launch {
+        repository.getPdfTextById(id).collect{ result ->
             when(result){
                 is Resource.Loading -> {
                     _state.value = _state.value.copy(
@@ -41,45 +33,14 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
                 is Resource.Success -> {
                     _state.value = _state.value.copy(
                         loading = false,
-                        //result = result.data!!
+                        result = result.data!!
                     )
                 }
                 is Resource.Error -> {
-                    Log.d("TAG", "extractTextFromPdfBitmaps: error ${result.message}")
-                }
-            }
-        }
-    }
-
-   /* fun fetchPdfTextById(pdfId: Int) {
-        viewModelScope.launch {
-            repository.getPdfTextById(pdfId).collect { pdfTexts ->
-                _state.value = _state.value.copy(
-                    result = pdfTexts
-                )
-            }
-        }
-    }*/
-
-    private fun getTextFromScannedPdf(pdfBitmaps: List<Bitmap>) = viewModelScope.launch {
-
-        repository.recognizeTextFromImages(
-            id = 1,
-            pdfBitmaps = pdfBitmaps).collect{ result ->
-
-            when(result){
-                is Resource.Loading -> {
-                    _state.value = _state.value.copy(
-                        loading = true
-                    )
-                }
-                is Resource.Success -> {
                     _state.value = _state.value.copy(
                         loading = false,
+                        error = result.message
                     )
-                }
-                is Resource.Error -> {
-                    TODO()
                 }
             }
         }
@@ -87,12 +48,8 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
 
     fun event(event: PdfScreenEvents){
         when(event){
-            is PdfScreenEvents.GetTextFromScannedPdf -> {
-                getTextFromScannedPdf(event.pdfBitmaps)
-            }
-            is PdfScreenEvents.ExtractTextFromPdfBitmaps -> {
-                extractTextFromPdfBitmaps(context = event.context,
-                    uri = event.uri)
+            is PdfScreenEvents.GetPdfTextById -> {
+                getPdfTextWithId(event.pdfId)
             }
             is PdfScreenEvents.PauseSpeaking -> {
                 pauseTts()
@@ -106,24 +63,19 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
             is PdfScreenEvents.StopSpeaking -> {
                 stopTTs()
             }
-
-            is PdfScreenEvents.GetPdfById -> {
-              //  fetchPdfTextById(event.pdfId)
-            }
         }
     }
 
     //tts manager
-
     // Function to handle speaking text
+
     private fun ttsSpeak(text: String) {
         _state.value = _state.value.copy(
             isSpeaking = true,
             isPaused = false,
-            currentText = text // Keep track of the current text
+            currentText = text
         )
         ttsManager.speak(text)
-        Log.d("TAG", "ttsSpeak: Speak executed")
     }
 
     // Function to pause TTS
@@ -133,7 +85,6 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
             isSpeaking = false
         )
         ttsManager.pauseSpeaking()
-        Log.d("TAG", "ttsSpeak: pause executed")
     }
 
     // Function to resume TTS
@@ -144,7 +95,6 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
                 isSpeaking = true
             )
             ttsManager.resumeSpeaking()
-            Log.d("TAG", "ttsSpeak: resume executed")
         }
     }
 
@@ -156,6 +106,13 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
             isPaused = false,
             remainingText = ""
         )
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ttsManager.isInitialized = false
+        ttsManager.stopSpeaking()
+        ttsManager.shutdown()
     }
 
 }

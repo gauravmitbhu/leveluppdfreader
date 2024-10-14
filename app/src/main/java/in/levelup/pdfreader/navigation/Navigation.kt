@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import `in`.levelup.pdfreader.screen.main_screen.MainScreen
 import `in`.levelup.pdfreader.screen.main_screen.MainScreenViewModel
 import `in`.levelup.pdfreader.screen.pdf_reader_screen.PdfScreenStates
+import `in`.levelup.pdfreader.screen.pdf_reader_screen.PdfScreenViewModel
 import `in`.levelup.pdfreader.screen.pdf_reader_screen.PdfViewerScreen
 
 
@@ -43,9 +44,13 @@ fun MyNavigation(
             arguments = listOf(navArgument("id") { type = NavType.IntType })
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getInt("id") ?: 0
+
+            val viewModel: PdfScreenViewModel = hiltViewModel()
+            val state = viewModel.state.value
+
             PdfViewerScreen(
-                states = PdfScreenStates(),
-                events = {},
+                states = state,
+                events = viewModel::event,
                 id = id
             )
         }

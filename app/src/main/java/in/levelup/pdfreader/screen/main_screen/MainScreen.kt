@@ -1,7 +1,10 @@
 package `in`.levelup.pdfreader.screen.main_screen
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.provider.OpenableColumns
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -34,8 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import `in`.levelup.pdfreader.model.Pdf
-import `in`.levelup.pdfreader.model.PdfText
 import `in`.levelup.pdfreader.util.PdfBitmapConverter
+import `in`.levelup.pdfreader.util.getFileNameFromUri
 
 @Composable
 fun MainScreen(
@@ -66,7 +69,7 @@ fun MainScreen(
             pdfUri?.let { uri ->
                 renderedPages = pdfBitmapConverter.pdfToBitmaps(uri)
                 events(MainScreenEvents.AddPdf(
-                    pdf = Pdf(pdfName = uri.lastPathSegment.toString()),
+                    pdf = Pdf(pdfName = getFileNameFromUri(uri = uri, context = context)),
                     bitmaps = renderedPages
                 ))
                 events(MainScreenEvents.GetTextFromPdfBitMaps(renderedPages))
@@ -75,11 +78,14 @@ fun MainScreen(
 
         val choosePdfLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent()
-        ) {
-            pdfUri = it
+        ) { uri ->
+            pdfUri = uri
         }
 
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.White)
+        ) {
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -109,13 +115,11 @@ fun MainScreen(
 @Composable
 @Preview
 fun MainScreenPreview(){
-    /*MainScreen(
+    MainScreen(
         states = MainScreenStates(),
         events = {},
         navController = rememberNavController()
-    )*/
-
-    //PdfLazyList(pdfs = Pdf(pdfName = "test"))
+    )
 }
 
 @Composable

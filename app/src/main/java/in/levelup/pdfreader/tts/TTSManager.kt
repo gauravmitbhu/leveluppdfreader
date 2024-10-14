@@ -24,6 +24,7 @@ class TTSManager @Inject constructor(private val context: Context) {
     }
 
     private val speechListener = object : UtteranceProgressListener() {
+
         override fun onStart(utteranceId: String?) {
             Log.d("TTSManager", "onStart: Speaking started")
         }
@@ -83,7 +84,7 @@ class TTSManager @Inject constructor(private val context: Context) {
         if (isInitialized) {
             textToSpeech?.stop() // Stop TTS when paused
             isPaused = true
-            remainingText = remainingText.substring(spokenText.length) // Update remaining text
+            //remainingText = remainingText.substring(spokenText.length) // Update remaining text
             Log.d("TTSManager", "Paused. Remaining text: $remainingText")
         }
     }

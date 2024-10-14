@@ -13,6 +13,7 @@ import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor
 import `in`.levelup.pdfreader.data.roomdatabase.PdfTextDao
 import `in`.levelup.pdfreader.model.Pdf
 import `in`.levelup.pdfreader.model.PdfText
+import `in`.levelup.pdfreader.model.PdfsWithText
 import `in`.levelup.pdfreader.util.Resource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -94,6 +95,16 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
         emit(Resource.Loading())
         try {
             val result = pdfTextDao.getLatestPdf()
+            emit(Resource.Success(result))
+        } catch (e: Exception){
+            emit(Resource.Error(e.message))
+        }
+    }
+
+    fun getPdfTextById(id: Int): Flow<Resource<List<PdfsWithText>>> = flow {
+        emit(Resource.Loading())
+        try {
+            val result = pdfTextDao.getPdfWithText(pdfId = id)
             emit(Resource.Success(result))
         } catch (e: Exception){
             emit(Resource.Error(e.message))
