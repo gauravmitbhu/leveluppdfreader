@@ -81,6 +81,9 @@ fun PdfViewerScreen(
                         icon = R.drawable.arrow_back,
                         iconContentDescription = "",
                         onClick = {
+                            events(
+                                PdfScreenEvents.StopSpeaking
+                            )
                             if (pdfPageIndex > 0) {
                                 pdfPageIndex--
                             }
@@ -130,6 +133,9 @@ fun PdfViewerScreen(
                         icon = R.drawable.arrow_forward,
                         iconContentDescription = "",
                         onClick = {
+                            events(
+                                PdfScreenEvents.StopSpeaking
+                            )
                             if (pdfTextList.pdfTexts.size > pdfPageIndex + 1) {
                                 pdfPageIndex++
                             }

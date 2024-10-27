@@ -15,13 +15,13 @@ class TTSManager @Inject constructor(private val context: Context) {
     var isInitialized = false
     private var ttsListener: TTSListener? = null
 
-    private var remainingText: String = ""
-    private var spokenText = "" // To keep track of spoken text
-    private var isPaused = false
-
     fun setTTSListener(listener: TTSListener) {
         this.ttsListener = listener
     }
+
+    private var remainingText: String = ""
+    private var spokenText = "" // To keep track of spoken text
+    private var isPaused = false
 
     private val speechListener = object : UtteranceProgressListener() {
 
@@ -30,18 +30,11 @@ class TTSManager @Inject constructor(private val context: Context) {
         }
 
         override fun onDone(utteranceId: String?) {
-            Log.d("TTSManager", "onDone: Speaking finished")
-            // Mark that a chunk has been spoken
             spokenText += extractNextChunk(spokenText.length, remainingText)
-            Log.d("TTSManager", "Spoken text updated: $spokenText")
-
             if (spokenText.length < remainingText.length && !isPaused) {
-                // Continue speaking the next chunk
                 val nextChunk = extractNextChunk(spokenText.length, remainingText)
-                Log.d("TTSManager", "Continuing with next chunk: $nextChunk")
                 textToSpeech?.speak(nextChunk, TextToSpeech.QUEUE_FLUSH, null, "ttsSpeakNext")
             } else {
-                // If all text has been spoken or TTS is paused, notify listener
                 if (spokenText.length >= remainingText.length) {
                     ttsListener?.onTTSFinished()
                     reset()
@@ -60,10 +53,9 @@ class TTSManager @Inject constructor(private val context: Context) {
                 textToSpeech?.language = Locale.getDefault()
                 textToSpeech?.setSpeechRate(1.0f)
                 isInitialized = true
-                Log.d("TTSManager", "TTS initialized successfully")
                 textToSpeech?.setOnUtteranceProgressListener(speechListener)
             } else {
-                Log.e("TTSManager", "TTS initialization failed")
+                Log.e("TTSManager", "TTS initializatio failed")
             }
         }
     }
@@ -84,8 +76,7 @@ class TTSManager @Inject constructor(private val context: Context) {
         if (isInitialized) {
             textToSpeech?.stop() // Stop TTS when paused
             isPaused = true
-            //remainingText = remainingText.substring(spokenText.length) // Update remaining text
-            Log.d("TTSManager", "Paused. Remaining text: $remainingText")
+            remainingText = remainingText.substring(spokenText.length) // Update remaining text
         }
     }
 
@@ -95,7 +86,6 @@ class TTSManager @Inject constructor(private val context: Context) {
             // Continue speaking the remaining text
             val nextChunk = extractNextChunk(spokenText.length, remainingText)
             textToSpeech?.speak(nextChunk, TextToSpeech.QUEUE_FLUSH, null, "ttsResume")
-            Log.d("TTSManager", "Resumed speaking from: $nextChunk")
         }
     }
 

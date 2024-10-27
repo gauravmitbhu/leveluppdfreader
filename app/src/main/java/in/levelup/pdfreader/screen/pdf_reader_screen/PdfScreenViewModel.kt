@@ -1,11 +1,13 @@
 package `in`.levelup.pdfreader.screen.pdf_reader_screen
 
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import `in`.levelup.pdfreader.repository.Repository
+import `in`.levelup.pdfreader.tts.TTSListener
 import `in`.levelup.pdfreader.tts.TTSManager
 import `in`.levelup.pdfreader.util.Resource
 import kotlinx.coroutines.launch
@@ -13,13 +15,16 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PdfScreenViewModel @Inject constructor(private val repository: Repository,
-                                             private val ttsManager: TTSManager): ViewModel() {
+                                             private val ttsManager: TTSManager): ViewModel(), TTSListener {
 
     private val _state = mutableStateOf(PdfScreenStates())
     val state: State<PdfScreenStates> = _state
 
     init {
-        ttsManager.init()
+        ttsManager.setTTSListener(this)
+        if (!ttsManager.isInitialized){
+            ttsManager.init()
+        }
     }
 
     private fun getPdfTextWithId(id: Int) = viewModelScope.launch {
@@ -113,6 +118,14 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
         ttsManager.isInitialized = false
         ttsManager.stopSpeaking()
         ttsManager.shutdown()
+    }
+
+    override fun onTTSFinished() {
+        Log.d("TAG", "onTTSFinished: finished")
+        _state.value = _state.value.copy(
+            isPaused = false,
+            isSpeaking = false
+        )
     }
 
 }
