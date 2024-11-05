@@ -51,7 +51,8 @@ fun MyNavigation(
             PdfViewerScreen(
                 states = state,
                 events = viewModel::event,
-                id = id
+                id = id,
+                navController = navController
             )
         }
     }

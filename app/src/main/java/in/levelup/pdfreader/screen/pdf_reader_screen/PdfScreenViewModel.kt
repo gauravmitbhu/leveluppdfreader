@@ -21,7 +21,6 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
     val state: State<PdfScreenStates> = _state
 
     init {
-        ttsManager.setTTSListener(this)
         if (!ttsManager.isInitialized){
             ttsManager.init()
         }
@@ -67,6 +66,12 @@ class PdfScreenViewModel @Inject constructor(private val repository: Repository,
             }
             is PdfScreenEvents.StopSpeaking -> {
                 stopTTs()
+            }
+            PdfScreenEvents.PreviousLive -> {
+                ttsManager.goToPreviousSentence()
+            }
+            PdfScreenEvents.SkipLine -> {
+                ttsManager.skipToNextSentence()
             }
         }
     }

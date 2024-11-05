@@ -11,4 +11,6 @@ sealed class PdfScreenEvents {
     data object PauseSpeaking: PdfScreenEvents()
     data object ResumeSpeaking: PdfScreenEvents()
     data object StopSpeaking: PdfScreenEvents()
+    data object SkipLine: PdfScreenEvents()
+    data object PreviousLive: PdfScreenEvents()
 }

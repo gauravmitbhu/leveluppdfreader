@@ -30,6 +30,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import `in`.levelup.Pdfreader.R
 
 @Composable
@@ -37,6 +39,7 @@ fun PdfViewerScreen(
     modifier: Modifier = Modifier,
     states: PdfScreenStates,
     events: (PdfScreenEvents) -> Unit,
+    navController: NavController,
     id: Int) {
 
     var pdfPageIndex by remember {
@@ -71,7 +74,9 @@ fun PdfViewerScreen(
                             .fillMaxSize(),
                         icon = R.drawable.arrow_left_alt,
                         iconContentDescription = "",
-                        onClick = {}
+                        onClick = {
+                            navController.popBackStack()
+                        }
                     )
 
                     PageNavigationIcon(
@@ -97,7 +102,7 @@ fun PdfViewerScreen(
                                 .weight(1f)
                                 .fillMaxSize(),
                             icon = R.drawable.play_arrow,
-                            iconContentDescription = "",
+                            iconContentDescription = "play button",
                             onClick = {
                                 if (states.isPaused) {
                                     events(
@@ -148,7 +153,13 @@ fun PdfViewerScreen(
                             .fillMaxSize(),
                         icon = R.drawable.replay,
                         iconContentDescription = "",
-                        onClick = {}
+                        onClick = {
+                            events(
+                                PdfScreenEvents.SpeakText(
+                                    pdfTextList.pdfTexts[pdfPageIndex].text
+                                )
+                            )
+                        }
                     )
 
                     PageNavigationIcon(
@@ -157,7 +168,11 @@ fun PdfViewerScreen(
                             .fillMaxSize(),
                         icon = R.drawable.fast_rewind,
                         iconContentDescription = "",
-                        onClick = {}
+                        onClick = {
+                            events(
+                                PdfScreenEvents.PreviousLive
+                            )
+                        }
                     )
 
                     PageNavigationIcon(
@@ -166,7 +181,11 @@ fun PdfViewerScreen(
                             .fillMaxSize(),
                         icon = R.drawable.fast_forward,
                         iconContentDescription = "",
-                        onClick = {}
+                        onClick = {
+                            events(
+                                PdfScreenEvents.SkipLine
+                            )
+                        }
                     )
                 }
 
@@ -187,48 +206,6 @@ fun PdfViewerScreen(
                     )
                 }
 
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .background(color = Color.DarkGray),
-                ){
-                    PageNavigationIcon(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxSize(),
-                        icon = R.drawable.arrow_left_alt,
-                        iconContentDescription = "",
-                        onClick = {}
-                    )
-
-                    PageNavigationIcon(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxSize(),
-                        icon = R.drawable.arrow_back,
-                        iconContentDescription = "",
-                        onClick = {}
-                    )
-
-                    PageNavigationIcon(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxSize(),
-                        icon = R.drawable.play_arrow,
-                        iconContentDescription = "",
-                        onClick = {}
-                    )
-
-                    PageNavigationIcon(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxSize(),
-                        icon = R.drawable.arrow_forward,
-                        iconContentDescription = "",
-                        onClick = {}
-                    )
-                }
-
             } else {
                 //TODO
             }
@@ -244,7 +221,8 @@ fun PdfViewerScreenPreview() {
             loading = false,
             result = listOf()),
         events = {},
-        id = 0
+        id = 0,
+        navController = rememberNavController()
     )
 }
 

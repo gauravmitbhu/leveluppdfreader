@@ -29,6 +29,26 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
         }
     }
 
+    /*private fun extractTextFromPdfUri(context: Context, pdfUri: Uri) = viewModelScope.launch {
+        repository.extractTextFromPdfUriAsFlow(context, pdfUri).collect { result ->
+            when(result){
+                is Resource.Loading -> {
+                    Log.d("TAG", "extractTextFromPdfUri: loading ")
+                }
+                is Resource.Success -> {
+                    _state.value = _state.value.copy(
+                        loading = false,
+                        debugText = result.data!![0]
+                    )
+                    Log.d("TAG", "extractTextFromPdfUri: ${result.data[0]}")
+                }
+                is Resource.Error -> {
+                    Log.d("TAG", "extractTextFromPdfUri: ${result.message} ")
+                }
+            }
+        }
+    }*/
+
     private fun storePdfTextWithId(bitmaps: List<Bitmap>) = viewModelScope.launch {
         repository.getLatestPdfEntry().collect{ result ->
             when(result){
@@ -112,13 +132,19 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
              is MainScreenEvents.AddPdf -> {
                  insertPdf(bitmaps = event.bitmaps,
                      pdf = event.pdf
-                     )
+                 )
              }
              is MainScreenEvents.GetAllPds -> {
                  getAllPdf()
              }
              is MainScreenEvents.StorePdfTextWithId -> {
                  storePdfTextWithId(event.bitmaps)
+             }
+             is MainScreenEvents.ExtractTextFromPdf -> {
+                 /*extractTextFromPdfUri(
+                     context = event.context,
+                     pdfUri = event.pdfUri
+                 )*/
              }
          }
     }

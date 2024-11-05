@@ -1,15 +1,13 @@
 package `in`.levelup.pdfreader.screen.main_screen
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-import android.provider.OpenableColumns
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -82,21 +81,22 @@ fun MainScreen(
             pdfUri = uri
         }
 
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .background(color = Color.White)
-        ) {
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                shape = RoundedCornerShape(15),
-                onClick = {
-                    choosePdfLauncher.launch("application/pdf")
-                }) {
-                Text("Select Pdf")
-            }
-            if (!states.loading) {
+        if(!states.loading){
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .background(color = Color.White)
+            ) {
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    shape = RoundedCornerShape(15),
+                    onClick = {
+                        choosePdfLauncher.launch("application/pdf")
+                    }) {
+                    Text("Select Pdf")
+                }
+
                 LazyColumn {
                     items(states.pdf) { result ->
                         PdfLazyList(
@@ -105,10 +105,13 @@ fun MainScreen(
                         )
                     }
                 }
-            } else {
+            }
+        } else {
+            Box(contentAlignment = Alignment.Center){
                 CircularProgressIndicator()
             }
         }
+
     }
 }
 

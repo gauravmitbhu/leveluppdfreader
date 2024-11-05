@@ -27,7 +27,7 @@ import javax.inject.Inject
 
 class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
 
-    fun extractTextFromPdfUriAsFlow(context: Context, pdfUri: Uri): Flow<Resource<List<String>>> = flow {
+    /*fun extractTextFromPdfUriAsFlow(context: Context, pdfUri: Uri): Flow<Resource<List<String>>> = flow {
         emit(Resource.Loading())
         val extractedTexts = mutableListOf<String>()
         try {
@@ -44,7 +44,7 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
             e.printStackTrace()
             emit(Resource.Error(e.message))
         }
-    }
+    }*/
 
     fun recognizeTextFromImages(
         id: Int,

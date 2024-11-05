@@ -15,77 +15,85 @@ class TTSManager @Inject constructor(private val context: Context) {
     var isInitialized = false
     private var ttsListener: TTSListener? = null
 
-    fun setTTSListener(listener: TTSListener) {
-        this.ttsListener = listener
-    }
-
     private var remainingText: String = ""
-    private var spokenText = "" // To keep track of spoken text
+    private var spokenText = "" // Track spoken text
     private var isPaused = false
+    private val sentences: List<String>
+        get() = remainingText.split(".").map { it.trim() }.filter { it.isNotEmpty() }
+    private var currentSentenceIndex = 0
 
-    private val speechListener = object : UtteranceProgressListener() {
-
-        override fun onStart(utteranceId: String?) {
-            Log.d("TTSManager", "onStart: Speaking started")
-        }
-
-        override fun onDone(utteranceId: String?) {
-            spokenText += extractNextChunk(spokenText.length, remainingText)
-            if (spokenText.length < remainingText.length && !isPaused) {
-                val nextChunk = extractNextChunk(spokenText.length, remainingText)
-                textToSpeech?.speak(nextChunk, TextToSpeech.QUEUE_FLUSH, null, "ttsSpeakNext")
-            } else {
-                if (spokenText.length >= remainingText.length) {
-                    ttsListener?.onTTSFinished()
-                    reset()
-                }
-            }
-        }
-
-        override fun onError(utteranceId: String?) {
-            Log.e("TTSManager", "onError: Error while speaking")
-        }
-    }
-
+    // Initialize TTS and UtteranceProgressListener
     fun init() {
         textToSpeech = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech?.language = Locale.getDefault()
-                textToSpeech?.setSpeechRate(1.0f)
                 isInitialized = true
                 textToSpeech?.setOnUtteranceProgressListener(speechListener)
             } else {
-                Log.e("TTSManager", "TTS initializatio failed")
+                Log.e("TTSManager", "TTS initialization failed")
             }
         }
     }
 
+    // Function to start speaking a sentence from a specified index
+    private fun speakSentence(index: Int) {
+        if (index in sentences.indices) {
+            currentSentenceIndex = index
+            spokenText = sentences.take(index).joinToString(". ") + ". "
+            val sentenceToSpeak = sentences[index]
+            textToSpeech?.speak(sentenceToSpeak, TextToSpeech.QUEUE_FLUSH, null, "ttsSpeak")
+        } else {
+            ttsListener?.onTTSFinished()
+            reset()
+        }
+    }
+
+    // Function to skip to the next sentence
+    fun skipToNextSentence() {
+        if (isInitialized) {
+            if (currentSentenceIndex < sentences.size - 1) {
+                speakSentence(currentSentenceIndex + 1)
+            } else {
+                Log.d("TTSManager", "Already at the last sentence")
+                ttsListener?.onTTSFinished()
+            }
+        }
+    }
+
+    // Function to go back to the previous sentence
+    fun goToPreviousSentence() {
+        if (isInitialized && currentSentenceIndex > 0) {
+            speakSentence(currentSentenceIndex - 1)
+        } else {
+            Log.d("TTSManager", "Already at the first sentence")
+        }
+    }
+
+    // Start speaking from the beginning
     fun speak(text: String) {
         if (isInitialized) {
             isPaused = false
-            spokenText = "" // Reset spoken text
-            remainingText = text // Set the remaining text
-            val firstChunk = extractNextChunk(0, text) // Get the first chunk
-            textToSpeech?.speak(firstChunk, TextToSpeech.QUEUE_FLUSH, null, "ttsSpeakFirst")
+            spokenText = ""
+            remainingText = text
+            currentSentenceIndex = 0
+            speakSentence(currentSentenceIndex)
         } else {
             Log.e("TTSManager", "TTS not initialized")
         }
     }
 
+    // Pause, resume, and stop functions
     fun pauseSpeaking() {
         if (isInitialized) {
-            textToSpeech?.stop() // Stop TTS when paused
+            textToSpeech?.stop()
             isPaused = true
-            remainingText = remainingText.substring(spokenText.length) // Update remaining text
         }
     }
 
     fun resumeSpeaking() {
         if (isInitialized && isPaused) {
             isPaused = false
-            // Continue speaking the remaining text
-            val nextChunk = extractNextChunk(spokenText.length, remainingText)
-            textToSpeech?.speak(nextChunk, TextToSpeech.QUEUE_FLUSH, null, "ttsResume")
+            speakSentence(currentSentenceIndex)
         }
     }
 
@@ -98,21 +106,34 @@ class TTSManager @Inject constructor(private val context: Context) {
         textToSpeech?.shutdown()
     }
 
-    // Helper function to extract the next chunk of text (e.g., sentence or word)
-    private fun extractNextChunk(startIndex: Int, text: String): String {
-        // Break the text into sentences or words
-        val remainingText = text.substring(startIndex).trim()
-        val nextSentenceEnd = remainingText.indexOf('.')
-        return if (nextSentenceEnd != -1) {
-            remainingText.substring(0, nextSentenceEnd + 1).trim() // Return the next sentence
-        } else {
-            remainingText // Return whatever is left
-        }
-    }
-
+    // Reset function to clear data
     private fun reset() {
         spokenText = ""
         remainingText = ""
+        currentSentenceIndex = 0
         isPaused = false
+    }
+
+    private val speechListener = object : UtteranceProgressListener() {
+        override fun onStart(utteranceId: String?) {
+            Log.d("TTSManager", "onStart: Speaking started")
+        }
+
+        override fun onDone(utteranceId: String?) {
+            spokenText += sentences[currentSentenceIndex] + ". "
+            if (currentSentenceIndex < sentences.size - 1) {
+                skipToNextSentence()
+            } else {
+                ttsListener?.onTTSFinished()
+                reset()
+            }
+        }
+
+        @Deprecated("Deprecated in Java", ReplaceWith(
+            "Log.e(\"TTSManager\", \"onError: Error while speaking\")",
+            "android.util.Log"))
+        override fun onError(utteranceId: String?) {
+            Log.e("TTSManager", "onError: Error while speaking")
+        }
     }
 }
