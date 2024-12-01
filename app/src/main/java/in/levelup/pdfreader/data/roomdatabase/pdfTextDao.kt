@@ -15,6 +15,9 @@ interface PdfTextDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPdf(pdf: Pdf)
 
+    @Query("DELETE FROM pdf WHERE pdfId = :pdfId")
+    suspend fun deletePdf(pdfId: Int)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPdfText(pdfText: PdfText)
 

@@ -106,6 +106,16 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
         }
     }
 
+    private fun deletePdfById(id: Int) = viewModelScope.launch {
+        repository.deletePdfById(pdfId = id).collect{ result ->
+            when(result){
+                is Resource.Loading -> {}
+                is Resource.Success -> {}
+                is Resource.Error -> {}
+            }
+        }
+    }
+
     private fun insertPdf(pdf: Pdf,
                           bitmaps: List<Bitmap>
                           ) = viewModelScope.launch {
@@ -126,9 +136,6 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
 
     fun event(event: MainScreenEvents){
          when(event){
-             is MainScreenEvents.GetTextFromPdfBitMaps -> {
-                 //getTextFromPdfBitMaps(event.bitmaps)
-             }
              is MainScreenEvents.AddPdf -> {
                  insertPdf(bitmaps = event.bitmaps,
                      pdf = event.pdf
@@ -140,11 +147,8 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
              is MainScreenEvents.StorePdfTextWithId -> {
                  storePdfTextWithId(event.bitmaps)
              }
-             is MainScreenEvents.ExtractTextFromPdf -> {
-                 /*extractTextFromPdfUri(
-                     context = event.context,
-                     pdfUri = event.pdfUri
-                 )*/
+             is MainScreenEvents.DeletePdfById -> {
+                 deletePdfById(id = event.id)
              }
          }
     }

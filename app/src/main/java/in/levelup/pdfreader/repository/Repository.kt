@@ -48,8 +48,7 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
 
     fun recognizeTextFromImages(
         id: Int,
-        pdfBitmaps: List<Bitmap>,
-    ): Flow<Resource<Unit>> = flow {
+        pdfBitmaps: List<Bitmap>): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         try {
@@ -72,15 +71,20 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
     }
 
     //room database
-
-    suspend fun addPdf(pdf: Pdf){
-        pdfTextDao.insertPdf(pdf = pdf)
-    }
-
     fun insertPdf(pdf: Pdf): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
             pdfTextDao.insertPdf(pdf = pdf)
+            emit(Resource.Success(Unit))
+        } catch (e: Exception){
+            emit(Resource.Error(e.message))
+        }
+    }
+
+    fun deletePdfById(pdfId: Int): Flow<Resource<Unit>> = flow{
+        emit(Resource.Loading())
+        try {
+            pdfTextDao.deletePdf(pdfId = pdfId)
             emit(Resource.Success(Unit))
         } catch (e: Exception){
             emit(Resource.Error(e.message))
