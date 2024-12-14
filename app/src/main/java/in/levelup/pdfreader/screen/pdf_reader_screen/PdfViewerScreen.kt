@@ -73,7 +73,7 @@ fun PdfViewerScreen(
                             .weight(1f)
                             .fillMaxSize(),
                         icon = R.drawable.arrow_left_alt,
-                        iconContentDescription = "",
+                        iconContentDescription = "go back",
                         onClick = {
                             navController.popBackStack()
                         }
@@ -84,7 +84,7 @@ fun PdfViewerScreen(
                             .weight(1f)
                             .fillMaxSize(),
                         icon = R.drawable.arrow_back,
-                        iconContentDescription = "",
+                        iconContentDescription = "previous page",
                         onClick = {
                             events(
                                 PdfScreenEvents.StopSpeaking
@@ -102,7 +102,7 @@ fun PdfViewerScreen(
                                 .weight(1f)
                                 .fillMaxSize(),
                             icon = R.drawable.play_arrow,
-                            iconContentDescription = "play button",
+                            iconContentDescription = "play",
                             onClick = {
                                 if (states.isPaused) {
                                     events(
@@ -124,7 +124,7 @@ fun PdfViewerScreen(
                                 .weight(1f)
                                 .fillMaxSize(),
                             icon = R.drawable.pause,
-                            iconContentDescription = "",
+                            iconContentDescription = "pause",
                             onClick = {
                                 events(PdfScreenEvents.PauseSpeaking)
                             }
@@ -136,7 +136,7 @@ fun PdfViewerScreen(
                             .weight(1f)
                             .fillMaxSize(),
                         icon = R.drawable.arrow_forward,
-                        iconContentDescription = "",
+                        iconContentDescription = "next page",
                         onClick = {
                             events(
                                 PdfScreenEvents.StopSpeaking
@@ -152,7 +152,7 @@ fun PdfViewerScreen(
                             .weight(1f)
                             .fillMaxSize(),
                         icon = R.drawable.replay,
-                        iconContentDescription = "",
+                        iconContentDescription = "restart",
                         onClick = {
                             events(
                                 PdfScreenEvents.SpeakText(
@@ -167,7 +167,7 @@ fun PdfViewerScreen(
                             .weight(1f)
                             .fillMaxSize(),
                         icon = R.drawable.fast_rewind,
-                        iconContentDescription = "",
+                        iconContentDescription = "previous line",
                         onClick = {
                             events(
                                 PdfScreenEvents.PreviousLive
@@ -180,7 +180,7 @@ fun PdfViewerScreen(
                             .weight(1f)
                             .fillMaxSize(),
                         icon = R.drawable.fast_forward,
-                        iconContentDescription = "",
+                        iconContentDescription = "next line",
                         onClick = {
                             events(
                                 PdfScreenEvents.SkipLine

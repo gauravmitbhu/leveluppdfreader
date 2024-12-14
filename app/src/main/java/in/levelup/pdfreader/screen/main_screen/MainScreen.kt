@@ -83,8 +83,7 @@ fun MainScreen(
 
     Surface(modifier = Modifier
         .fillMaxSize()
-        .background(Color.White)
-        ) {
+        .background(Color.White)) {
 
         //alert dialog
         @Composable
@@ -102,7 +101,7 @@ fun MainScreen(
                     confirmButton = {
                         Button(
                             onClick = {
-                                Log.d("TAG", "MyAlertDialog: ${selectedPdfId.intValue}")
+
                                 events(
                                     MainScreenEvents.DeletePdfById(
                                         id = selectedPdfId.intValue
@@ -135,20 +134,19 @@ fun MainScreen(
         }
 
         LaunchedEffect(pdfUri) {
-            Log.d("TAG", "MainScreen: pdf change")
             pdfUri?.let { uri ->
                 renderedPages = pdfBitmapConverter.pdfToBitmaps(uri)
                 events(MainScreenEvents.AddPdf(
                     pdf = Pdf(pdfName = getFileNameFromUri(uri = uri, context = context)),
                     bitmaps = renderedPages
                 ))
+                states.loading = false
             }
         }
 
         val choosePdfLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent()
         ) { uri ->
-            Log.d("TAG", "Uri set")
             pdfUri = uri
         }
 
@@ -167,6 +165,7 @@ fun MainScreen(
                         contentColor = Color.White),
                     onClick = {
                         choosePdfLauncher.launch("application/pdf")
+                        states.loading = true
                     }) {
                     Text("Select Pdf")
                 }
@@ -183,6 +182,7 @@ fun MainScreen(
                 }
             }
         } else {
+            Log.d("TAG", "MainScreen: loading")
             //loading dialog
             Dialog(
                 onDismissRequest = { showLoadingDialog = false },
@@ -218,8 +218,8 @@ fun MainScreenPreview(){
 fun PdfLazyList(pdfs: Pdf,
                 navController: NavController,
                 shouldShowDialog: MutableState<Boolean>,
-                selectedPdfId: MutableState<Int>
-) {
+                selectedPdfId: MutableState<Int>) {
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
