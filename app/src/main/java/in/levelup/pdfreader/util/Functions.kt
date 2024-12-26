@@ -16,4 +16,3 @@ fun getFileNameFromUri(uri: Uri, context: Context): String {
     }
     return fileName.substringBeforeLast(".")
 }
-

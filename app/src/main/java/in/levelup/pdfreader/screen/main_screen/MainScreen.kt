@@ -11,6 +11,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
@@ -28,6 +31,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,8 +58,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import `in`.levelup.pdfreader.model.Pdf
 import `in`.levelup.pdfreader.util.PdfBitmapConverter
+import `in`.levelup.pdfreader.model.Pdf
 import `in`.levelup.pdfreader.util.getFileNameFromUri
 
 @Composable
@@ -63,11 +69,13 @@ fun MainScreen(
     navController: NavController){
 
     val shouldShowDialog = remember { mutableStateOf(false) }
+    val shouldShowPdfSelectionDialog = remember { mutableStateOf(false) }
     var showLoadingDialog by remember { mutableStateOf(false) }
 
-    val selectedPdfId = remember { mutableIntStateOf(0) }
-
     val context = LocalContext.current
+
+    val selectedPdfId = remember { mutableIntStateOf(0) }
+    var selectedPdfTypeOption by remember { mutableStateOf("") }
 
     val pdfBitmapConverter = remember {
         PdfBitmapConverter(context)
@@ -79,6 +87,12 @@ fun MainScreen(
 
     var renderedPages by remember {
         mutableStateOf<List<Bitmap>>(emptyList())
+    }
+
+    val choosePdfLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        pdfUri = uri
     }
 
     Surface(modifier = Modifier
@@ -129,31 +143,50 @@ fun MainScreen(
             }
         }
 
+        @Composable
+        fun PdfSelectionDialog(){
+            Dialog(onDismissRequest = { shouldShowPdfSelectionDialog.value = false }) {
+                RadioButtonSingleSelection { pdfSelectedOption ->
+                    selectedPdfTypeOption = pdfSelectedOption
+                    shouldShowPdfSelectionDialog.value = false
+                    choosePdfLauncher.launch("application/pdf")
+                }
+            }
+        }
+
         if (shouldShowDialog.value) {
             MyAlertDialog(shouldShowDialog = shouldShowDialog)
         }
 
+        if (shouldShowPdfSelectionDialog.value){
+            PdfSelectionDialog()
+        }
+
         LaunchedEffect(pdfUri) {
             pdfUri?.let { uri ->
-                renderedPages = pdfBitmapConverter.pdfToBitmaps(uri)
-                events(MainScreenEvents.AddPdf(
-                    pdf = Pdf(pdfName = getFileNameFromUri(uri = uri, context = context)),
-                    bitmaps = renderedPages
-                ))
-                states.loading = false
+                if (selectedPdfTypeOption == "Text Pdf") {
+                    events(
+                        MainScreenEvents.InsertExtractedPdf(
+                            pdf = Pdf(pdfName = getFileNameFromUri(uri = uri, context = context)),
+                            context = context,
+                            pdfUri = uri
+                        ))
+                } else {
+                    states.loading = true
+                    renderedPages = pdfBitmapConverter.pdfToBitmaps(uri) // causes delay in loading
+                    events(
+                        MainScreenEvents.InsertScannedPdf(
+                            pdf = Pdf(pdfName = getFileNameFromUri(uri = uri, context = context)),
+                            bitmaps = renderedPages
+                        ))
+                }
             }
         }
 
-        val choosePdfLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent()
-        ) { uri ->
-            pdfUri = uri
-        }
-
         if(!states.loading){
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .background(color = Color.Black)
+                Column(modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color.Black)
             ) {
                 Button(
                     modifier = Modifier
@@ -164,8 +197,7 @@ fun MainScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Black,
                         contentColor = Color.White),
                     onClick = {
-                        choosePdfLauncher.launch("application/pdf")
-                        states.loading = true
+                        shouldShowPdfSelectionDialog.value = true
                     }) {
                     Text("Select Pdf")
                 }
@@ -212,6 +244,56 @@ fun MainScreenPreview(){
         events = {},
         navController = rememberNavController()
     )
+}
+
+@Composable
+fun RadioButtonSingleSelection(modifier: Modifier = Modifier,
+                               onClick: (String) -> Unit) {
+
+    val radioOptions = listOf("Text Pdf", "Scanned Pdf")
+    val (selectedOption, onOptionSelected) = remember { mutableStateOf(radioOptions[1]) }
+    // Note that Modifier.selectableGroup() is essential to ensure correct accessibility behavior
+    Column(
+        modifier
+            .selectableGroup()
+            .border(width = 2.dp, color = Color.White)) {
+        radioOptions.forEach { text ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .selectable(
+                        selected = (text == selectedOption),
+                        onClick = { onOptionSelected(text) },
+                        role = Role.RadioButton
+                    )
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = (text == selectedOption),
+                    onClick = null // null recommended for accessibility with screen readers
+                )
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 16.dp)
+                )
+            }
+        }
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+                .border(width = 2.dp, color = Color.White),
+            shape = RoundedCornerShape(15),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Black,
+                contentColor = Color.White),
+            onClick = { onClick(selectedOption) }
+        ) {
+            Text("Select")
+        }
+    }
 }
 
 @Composable

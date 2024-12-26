@@ -1,6 +1,8 @@
 package `in`.levelup.pdfreader.screen.main_screen
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -29,37 +31,24 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
         }
     }
 
-    /*private fun extractTextFromPdfUri(context: Context, pdfUri: Uri) = viewModelScope.launch {
-        repository.extractTextFromPdfUriAsFlow(context, pdfUri).collect { result ->
-            when(result){
-                is Resource.Loading -> {
-                    Log.d("TAG", "extractTextFromPdfUri: loading ")
-                }
-                is Resource.Success -> {
-                    _state.value = _state.value.copy(
-                        loading = false,
-                        debugText = result.data!![0]
-                    )
-                    Log.d("TAG", "extractTextFromPdfUri: ${result.data[0]}")
-                }
-                is Resource.Error -> {
-                    Log.d("TAG", "extractTextFromPdfUri: ${result.message} ")
-                }
-            }
-        }
-    }*/
-
-    private fun storePdfTextWithId(bitmaps: List<Bitmap>) = viewModelScope.launch {
+    private fun storeScannedPdfTextWithId(
+        bitmaps: List<Bitmap>) = viewModelScope.launch {
         repository.getLatestPdfEntry().collect{ result ->
             when(result){
                 is Resource.Loading -> {
-                    Log.d("TAG", "getLatestEntry: Loading")
+                    _state.value = _state.value.copy(
+                        loading = true
+                    )
                 }
                 is Resource.Success -> {
                     Log.d("TAG", "getLatestEntry: ${result.data!!.pdfId}")
-                    getTextFromPdfBitMaps(id = result.data.pdfId,
+                    _state.value = _state.value.copy(
+                        loading = false
+                    )
+                    getTextFromScannedPdfBitMaps(
+                        id = result.data.pdfId,
                         bitmaps = bitmaps
-                        )
+                    )
                 }
                 is Resource.Error -> {
                     Log.d("TAG", "getLatestEntry: ${result.message}")
@@ -68,13 +57,65 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
         }
     }
 
-    private fun getTextFromPdfBitMaps(
+    private fun storeExtractedPdfTextWithId(
+        context: Context,
+        pdfUri: Uri) = viewModelScope.launch {
+        repository.getLatestPdfEntry().collect{ result ->
+            when(result){
+                is Resource.Loading -> {
+                    _state.value = _state.value.copy(
+                        loading = true
+                    )
+                }
+                is Resource.Success -> {
+                    Log.d("TAG", "getLatestEntry: ${result.data!!.pdfId}")
+                    _state.value = _state.value.copy(
+                        loading = false
+                    )
+                    extractTextFromPdfUri(
+                        id = result.data.pdfId,
+                        context = context,
+                        pdfUri = pdfUri,
+                    )
+                }
+                is Resource.Error -> {
+                    Log.d("TAG", "getLatestEntry: ${result.message}")
+                }
+            }
+        }
+    }
+
+    private fun getTextFromScannedPdfBitMaps(
         id: Int,
         bitmaps: List<Bitmap>) = viewModelScope.launch {
         repository.recognizeTextFromImages(
             id = id,
             pdfBitmaps = bitmaps).collect{ result ->
 
+            when(result){
+                is Resource.Loading -> {
+                    _state.value = _state.value.copy(
+                        loading = true
+                    )
+                }
+                is Resource.Success -> {
+                    _state.value = _state.value.copy(
+                        loading = false,
+                        isSuccess = true
+                    )
+                }
+                is Resource.Error -> {
+                    _state.value = _state.value.copy(
+                        loading = false,
+                        isSuccess = false
+                    )
+                }
+            }
+        }
+    }
+
+    private fun extractTextFromPdfUri(id: Int, context: Context, pdfUri: Uri) = viewModelScope.launch {
+        repository.extractTextFromPdfUriAsFlow(id = id, context = context, pdfUri = pdfUri).collect { result ->
             when(result){
                 is Resource.Loading -> {
                     _state.value = _state.value.copy(
@@ -116,16 +157,21 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
         }
     }
 
-    private fun insertPdf(pdf: Pdf,
-                          bitmaps: List<Bitmap>
+    private fun insertScannedPdf(pdf: Pdf,
+                                 bitmaps: List<Bitmap>
                           ) = viewModelScope.launch {
         repository.insertPdf(pdf = pdf).collect{result ->
             when(result){
                 is Resource.Loading -> {
-                    Log.d("TAG", "insertPdf: Loading")
+                    _state.value = _state.value.copy(
+                        loading = true
+                    )
                 }
                 is Resource.Success -> {
-                    storePdfTextWithId(bitmaps = bitmaps)
+                    _state.value = _state.value.copy(
+                        loading = false
+                    )
+                    storeScannedPdfTextWithId(bitmaps = bitmaps)
                 }
                 is Resource.Error -> {
                     Log.d("TAG", "insertPdf: Success")
@@ -134,18 +180,60 @@ class MainScreenViewModel @Inject constructor(private val repository: Repository
         }
     }
 
+    private fun insertExtractedPdf(pdf: Pdf,
+                                 context: Context,
+                                   pdfUri: Uri
+    ) = viewModelScope.launch {
+        repository.insertPdf(pdf = pdf).collect{result ->
+            when(result){
+                is Resource.Loading -> {
+                    _state.value = _state.value.copy(
+                        loading = true
+                    )
+                }
+                is Resource.Success -> {
+                    _state.value = _state.value.copy(
+                        loading = false
+                    )
+                    storeExtractedPdfTextWithId(
+                        context = context,
+                        pdfUri = pdfUri
+                    )
+                }
+                is Resource.Error -> {
+                    Log.d("TAG", "insertPdf: Success")
+                }
+            }
+        }
+    }
+
+    //events
+
     fun event(event: MainScreenEvents){
          when(event){
-             is MainScreenEvents.AddPdf -> {
-                 insertPdf(bitmaps = event.bitmaps,
-                     pdf = event.pdf
-                 )
-             }
              is MainScreenEvents.GetAllPds -> {
                  getAllPdf()
              }
-             is MainScreenEvents.StorePdfTextWithId -> {
-                 storePdfTextWithId(event.bitmaps)
+             is MainScreenEvents.InsertScannedPdf -> {
+                 insertScannedPdf(
+                     bitmaps = event.bitmaps,
+                     pdf = event.pdf
+                 )
+             }
+             is MainScreenEvents.InsertExtractedPdf ->{
+                 insertExtractedPdf(pdf = event.pdf,
+                     context = event.context,
+                     pdfUri = event.pdfUri
+                 )
+             }
+             is MainScreenEvents.StoreExtractedPdfTextWithId -> {
+                 storeExtractedPdfTextWithId(
+                     context = event.context,
+                     pdfUri = event.pdfUri
+                 )
+             }
+             is MainScreenEvents.StoreScannedPdfTextWithId -> {
+                 storeScannedPdfTextWithId(bitmaps = event.bitmaps)
              }
              is MainScreenEvents.DeletePdfById -> {
                  deletePdfById(id = event.id)

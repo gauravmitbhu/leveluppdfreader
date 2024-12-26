@@ -9,25 +9,23 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 
-class PdfBitmapConverter(private val context: Context) {
-
-    private var renderer: PdfRenderer? = null
+class PdfBitmapConverter(
+    private val context: Context
+) {
+    var renderer: PdfRenderer? = null
 
     suspend fun pdfToBitmaps(contentUri: Uri): List<Bitmap> {
         return withContext(Dispatchers.IO) {
-
             renderer?.close()
 
-            context
-                .contentResolver
-                .openFileDescriptor(contentUri, "r")
-                ?.use { descriptor ->
-                    with(PdfRenderer(descriptor)) {
-                        renderer = this
+            context.contentResolver.openFileDescriptor(contentUri, "r")?.use { descriptor ->
+                PdfRenderer(descriptor).use { pdfRenderer ->
+                    renderer = pdfRenderer
 
-                        return@withContext (0 until pageCount).map { index ->
-                            async {
-                                openPage(index).use { page ->
+                    (0 until pdfRenderer.pageCount).map { index ->
+                        async {
+                            synchronized(pdfRenderer) {
+                                pdfRenderer.openPage(index).use { page ->
                                     val bitmap = Bitmap.createBitmap(
                                         page.width,
                                         page.height,
@@ -44,10 +42,11 @@ class PdfBitmapConverter(private val context: Context) {
                                     bitmap
                                 }
                             }
-                        }.awaitAll()
-                    }
+                        }
+                    }.awaitAll()
                 }
-            return@withContext emptyList()
+            } ?: emptyList()
         }
     }
+
 }

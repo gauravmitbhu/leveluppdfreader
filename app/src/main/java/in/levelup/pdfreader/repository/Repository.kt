@@ -27,28 +27,35 @@ import javax.inject.Inject
 
 class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
 
-    /*fun extractTextFromPdfUriAsFlow(context: Context, pdfUri: Uri): Flow<Resource<List<String>>> = flow {
+    fun extractTextFromPdfUriAsFlow(
+        id: Int,
+        context: Context,
+        pdfUri: Uri): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
-        val extractedTexts = mutableListOf<String>()
         try {
             val inputStream: InputStream? = context.contentResolver.openInputStream(pdfUri)
             inputStream?.use {
                 val pdfDocument = PdfDocument(PdfReader(it))
                 for (pageNumber in 1..pdfDocument.numberOfPages) {
                     val pageText = PdfTextExtractor.getTextFromPage(pdfDocument.getPage(pageNumber))
-                    extractedTexts.add(pageText) }
+                    pdfTextDao.insertPdfText(
+                        PdfText(
+                            pageNumber = pageNumber + 1,
+                            text = pageText,
+                            pdfId = id
+                        )
+                    )
+                }
                 pdfDocument.close()
-                emit(Resource.Success(extractedTexts))
+                emit(Resource.Success(Unit))
             } ?: throw Exception("Unable to open InputStream from Uri")
         } catch (e: Exception) {
             e.printStackTrace()
             emit(Resource.Error(e.message))
         }
-    }*/
+    }
 
-    fun recognizeTextFromImages(
-        id: Int,
-        pdfBitmaps: List<Bitmap>): Flow<Resource<Unit>> = flow {
+    fun recognizeTextFromImages(id: Int, pdfBitmaps: List<Bitmap>): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         try {
