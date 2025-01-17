@@ -1,10 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id("kotlin-kapt")
-    id("dagger.hilt.android.plugin")
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.google.firebase.crashlytics)
+    id("kotlin-kapt")
+    id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -15,8 +15,8 @@ android {
         applicationId = "in.levelup.Pdfreader"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -105,4 +105,6 @@ dependencies {
 
     //bugfender
     implementation("com.bugfender.sdk:android:3.3.0")
+
+
 }

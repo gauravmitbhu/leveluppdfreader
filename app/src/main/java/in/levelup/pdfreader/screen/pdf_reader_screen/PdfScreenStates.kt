@@ -1,6 +1,5 @@
 package `in`.levelup.pdfreader.screen.pdf_reader_screen
 
-import `in`.levelup.pdfreader.model.PdfText
 import `in`.levelup.pdfreader.model.PdfsWithText
 
 data class PdfScreenStates(

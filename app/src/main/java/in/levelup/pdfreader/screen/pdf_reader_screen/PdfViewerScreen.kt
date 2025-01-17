@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,8 +42,8 @@ fun PdfViewerScreen(
     states: PdfScreenStates,
     events: (PdfScreenEvents) -> Unit,
     navController: NavController,
-    id: Int) {
-
+    id: Int
+) {
     var pdfPageIndex by remember {
         mutableIntStateOf(0)
     }
@@ -51,23 +53,22 @@ fun PdfViewerScreen(
     }
 
     Surface(modifier = modifier.fillMaxSize()) {
-
-        Column(modifier = Modifier.background(Color.DarkGray),
+        Column(
+            modifier = Modifier.background(Color.DarkGray),
             horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Center) {
-
+            verticalArrangement = Arrangement.Center
+        ) {
             if (states.result.isNotEmpty()) {
-
                 val pdfTextList = states.result.first()
 
-                //PlayPauseRow
+                // PlayPauseRow
 
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .background(color = Color.DarkGray),
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .background(color = Color.DarkGray),
                 ) {
-
                     PageNavigationIcon(
                         modifier = Modifier
                             .weight(1f)
@@ -95,7 +96,7 @@ fun PdfViewerScreen(
                         }
                     )
 
-                    //play pause logic
+                    // play pause logic
                     if (!states.isSpeaking) {
                         PageNavigationIcon(
                             modifier = Modifier
@@ -192,22 +193,23 @@ fun PdfViewerScreen(
                 InfoText(label = pdfTextList.pdf.pdfName)
                 InfoText(label = "Page ${pdfPageIndex + 1}/${pdfTextList.pdfTexts.size}")
 
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .background(color = Color.Black)) {
-
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .background(color = Color.Black)
+                ) {
                     Text(
                         modifier = Modifier
                             .padding(3.dp)
                             .verticalScroll(rememberScrollState()),
                         color = Color.White,
-                        text = pdfTextList.pdfTexts[pdfPageIndex].text
+                        text = pdfTextList.pdfTexts[pdfPageIndex].text,
+                        fontFamily = FontFamily(Font(R.font.hindi))
                     )
                 }
-
             } else {
-                //TODO
+                // TODO
             }
         }
     }
@@ -219,7 +221,8 @@ fun PdfViewerScreenPreview() {
     PdfViewerScreen(
         states = PdfScreenStates(
             loading = false,
-            result = listOf()),
+            result = listOf()
+        ),
         events = {},
         id = 0,
         navController = rememberNavController()
@@ -232,14 +235,14 @@ fun PageNavigationIcon(
     icon: Int,
     onClick: () -> Unit,
     iconContentDescription: String
-){
-
-    Box(modifier = modifier
-        .padding(3.dp)
-        .clip(shape = RoundedCornerShape(5))
-        .background(color = Color.Gray),
+) {
+    Box(
+        modifier = modifier
+            .padding(3.dp)
+            .clip(shape = RoundedCornerShape(5))
+            .background(color = Color.Gray),
         contentAlignment = Alignment.Center
-        ) {
+    ) {
         IconButton(
             modifier = Modifier,
             onClick = onClick
@@ -251,13 +254,13 @@ fun PageNavigationIcon(
             )
         }
     }
-
 }
 
 @Composable
 fun InfoText(label: String) {
     Text(
-        modifier = Modifier.padding(start = 3.dp,
+        modifier = Modifier.padding(
+            start = 3.dp,
             top = 4.dp,
             bottom = 4.dp
         ),
