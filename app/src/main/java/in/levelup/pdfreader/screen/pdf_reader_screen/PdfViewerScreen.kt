@@ -27,8 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -204,8 +202,7 @@ fun PdfViewerScreen(
                             .padding(3.dp)
                             .verticalScroll(rememberScrollState()),
                         color = Color.White,
-                        text = pdfTextList.pdfTexts[pdfPageIndex].text,
-                        fontFamily = FontFamily(Font(R.font.hindi))
+                        text = pdfTextList.pdfTexts[pdfPageIndex].text
                     )
                 }
             } else {
@@ -250,7 +247,7 @@ fun PageNavigationIcon(
             Icon(
                 painter = painterResource(id = icon),
                 tint = Color.White,
-                contentDescription = null
+                contentDescription = iconContentDescription
             )
         }
     }

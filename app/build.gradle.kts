@@ -72,39 +72,27 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    //coil
-    implementation(libs.coil.compose)
-
-    //text recognition
-    implementation("com.google.mlkit:text-recognition:16.0.1")
-    implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
-    implementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
-    implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
-    implementation("com.google.mlkit:text-recognition-korean:16.0.1")
-
-    //pdf
+    // text recognition
+    implementation(libs.text.recognition)
+    implementation(libs.text.recognition.chinese)
+    implementation(libs.text.recognition.devanagari)
+    implementation(libs.text.recognition.japanese)
+    implementation(libs.text.recognition.korean)
+    // pdf
     implementation(libs.itext7.core.v7115)
     implementation(libs.kernel)
-
-    //dagger hilt
+    // dagger hilt
     implementation(libs.hilt.android)
-    implementation (libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.navigation.compose)
     kapt(libs.hilt.android.compiler)
-
-    //coroutines
+    // coroutines
     implementation(libs.kotlinx.coroutines.play.services)
-
-    //navigation
-    implementation (libs.androidx.navigation.compose)
-
-    //room
+    // navigation
+    implementation(libs.androidx.navigation.compose)
+    // room
     implementation(libs.androidx.room.ktx)
     //noinspection KaptUsageInsteadOfKsp
     kapt(libs.androidx.room.compiler)
-
-    //bugfender
-    implementation("com.bugfender.sdk:android:3.3.0")
-
-
+    // bugfender
+    implementation(libs.android)
 }

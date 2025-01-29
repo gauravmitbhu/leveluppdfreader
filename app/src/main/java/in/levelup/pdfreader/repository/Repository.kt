@@ -6,6 +6,7 @@ import android.net.Uri
 import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfReader
@@ -57,7 +58,7 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
 
     fun recognizeTextFromImages(id: Int, pdfBitmaps: List<Bitmap>): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        val recognizer = TextRecognition.getClient(DevanagariTextRecognizerOptions.Builder().build())
         try {
             pdfBitmaps.forEachIndexed { index, bitmap ->
                 val image = InputImage.fromBitmap(bitmap, 0)
@@ -67,7 +68,8 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
                     PdfText(
                         pageNumber = index + 1,
                         text = text,
-                        pdfId = id)
+                        pdfId = id
+                    )
                 )
             }
             emit(Resource.Success(Unit))

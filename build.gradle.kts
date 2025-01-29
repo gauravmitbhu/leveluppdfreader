@@ -3,7 +3,6 @@ buildscript {
         classpath(libs.gradle)
         classpath(libs.kotlin.gradle.plugin)
         classpath(libs.hilt.android.gradle.plugin)
-        classpath("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.5")
     }
 }
 plugins {
