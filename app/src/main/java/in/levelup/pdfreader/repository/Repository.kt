@@ -6,8 +6,10 @@ import android.net.Uri
 import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
+import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfReader
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor
@@ -25,13 +27,13 @@ import kotlinx.coroutines.tasks.await
 import java.io.InputStream
 import javax.inject.Inject
 
-
 class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
 
-    fun extractTextFromPdfUriAsFlow(
+    /*fun extractTextFromPdfUriAsFlow(
         id: Int,
         context: Context,
-        pdfUri: Uri): Flow<Resource<Unit>> = flow {
+        pdfUri: Uri
+    ): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
             val inputStream: InputStream? = context.contentResolver.openInputStream(pdfUri)
@@ -54,11 +56,22 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
             e.printStackTrace()
             emit(Resource.Error(e.message))
         }
-    }
+    }*/
 
-    fun recognizeTextFromImages(id: Int, pdfBitmaps: List<Bitmap>): Flow<Resource<Unit>> = flow {
+    fun recognizeTextFromImages(id: Int, pdfBitmaps: List<Bitmap>, language: String): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
-        val recognizer = TextRecognition.getClient(DevanagariTextRecognizerOptions.Builder().build())
+
+        val recognizer = when (language.lowercase()) {
+            "chinese" -> TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
+            "devanagari" -> TextRecognition.getClient(DevanagariTextRecognizerOptions.Builder().build())
+            "japanese" -> TextRecognition.getClient(JapaneseTextRecognizerOptions.Builder().build())
+            "korean" -> TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
+            else -> {
+                emit(Resource.Error("Unsupported language: $language"))
+                return@flow
+            }
+        }
+
         try {
             pdfBitmaps.forEachIndexed { index, bitmap ->
                 val image = InputImage.fromBitmap(bitmap, 0)
@@ -79,23 +92,23 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
         }
     }
 
-    //room database
+    // room database
     fun insertPdf(pdf: Pdf): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
             pdfTextDao.insertPdf(pdf = pdf)
             emit(Resource.Success(Unit))
-        } catch (e: Exception){
+        } catch (e: Exception) {
             emit(Resource.Error(e.message))
         }
     }
 
-    fun deletePdfById(pdfId: Int): Flow<Resource<Unit>> = flow{
+    fun deletePdfById(pdfId: Int): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
             pdfTextDao.deletePdf(pdfId = pdfId)
             emit(Resource.Success(Unit))
-        } catch (e: Exception){
+        } catch (e: Exception) {
             emit(Resource.Error(e.message))
         }
     }
@@ -109,7 +122,7 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
         try {
             val result = pdfTextDao.getLatestPdf()
             emit(Resource.Success(result))
-        } catch (e: Exception){
+        } catch (e: Exception) {
             emit(Resource.Error(e.message))
         }
     }
@@ -119,9 +132,8 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
         try {
             val result = pdfTextDao.getPdfWithText(pdfId = id)
             emit(Resource.Success(result))
-        } catch (e: Exception){
+        } catch (e: Exception) {
             emit(Resource.Error(e.message))
         }
     }
-
 }
