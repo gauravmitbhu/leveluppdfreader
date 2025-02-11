@@ -218,6 +218,8 @@ fun MainScreen(
                                     if (selectedLanguage.isNotEmpty()) {
                                         onLanguageSelected(selectedLanguage)
                                     }
+                                    shouldShowPdfSelectionDialog.value = false
+                                    choosePdfLauncher.launch("application/pdf")
                                     onDismiss()
                                 }
                             ) {

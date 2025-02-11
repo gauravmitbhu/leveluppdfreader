@@ -2,8 +2,10 @@ package `in`.levelup.pdfreader.util
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -31,6 +33,10 @@ class PdfBitmapConverter(
                                         page.height,
                                         Bitmap.Config.ARGB_8888
                                     )
+
+                                    // Create a Canvas and fill it with white background
+                                    val canvas = Canvas(bitmap)
+                                    canvas.drawColor(-1)
 
                                     page.render(
                                         bitmap,
