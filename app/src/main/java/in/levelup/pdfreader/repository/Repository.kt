@@ -29,35 +29,6 @@ import javax.inject.Inject
 
 class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
 
-    /*fun extractTextFromPdfUriAsFlow(
-        id: Int,
-        context: Context,
-        pdfUri: Uri
-    ): Flow<Resource<Unit>> = flow {
-        emit(Resource.Loading())
-        try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(pdfUri)
-            inputStream?.use {
-                val pdfDocument = PdfDocument(PdfReader(it))
-                for (pageNumber in 1..pdfDocument.numberOfPages) {
-                    val pageText = PdfTextExtractor.getTextFromPage(pdfDocument.getPage(pageNumber))
-                    pdfTextDao.insertPdfText(
-                        PdfText(
-                            pageNumber = pageNumber + 1,
-                            text = pageText,
-                            pdfId = id
-                        )
-                    )
-                }
-                pdfDocument.close()
-                emit(Resource.Success(Unit))
-            } ?: throw Exception("Unable to open InputStream from Uri")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emit(Resource.Error(e.message))
-        }
-    }*/
-
     fun recognizeTextFromImages(id: Int, pdfBitmaps: List<Bitmap>, language: String): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
 
@@ -136,4 +107,33 @@ class Repository @Inject constructor(private val pdfTextDao: PdfTextDao) {
             emit(Resource.Error(e.message))
         }
     }
+
+    /*fun extractTextFromPdfUriAsFlow(
+        id: Int,
+        context: Context,
+        pdfUri: Uri
+    ): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        try {
+            val inputStream: InputStream? = context.contentResolver.openInputStream(pdfUri)
+            inputStream?.use {
+                val pdfDocument = PdfDocument(PdfReader(it))
+                for (pageNumber in 1..pdfDocument.numberOfPages) {
+                    val pageText = PdfTextExtractor.getTextFromPage(pdfDocument.getPage(pageNumber))
+                    pdfTextDao.insertPdfText(
+                        PdfText(
+                            pageNumber = pageNumber + 1,
+                            text = pageText,
+                            pdfId = id
+                        )
+                    )
+                }
+                pdfDocument.close()
+                emit(Resource.Success(Unit))
+            } ?: throw Exception("Unable to open InputStream from Uri")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emit(Resource.Error(e.message))
+        }
+    }*/
 }
